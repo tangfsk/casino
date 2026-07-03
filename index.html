@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>骰仔大细 · 赌场掷骰</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #d4af37;
+    --gold-light: #f4e4a1;
+    --gold-dark: #8b7500;
+    --red: #c41e3a;
+    --red-dark: #8b0a1a;
+    --green: #0a5f38;
+    --green-dark: #054028;
+    --bg-dark: #0a1a0a;
+    --felt: #0d4f2c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Noto Sans TC', sans-serif;
+    background:
+      radial-gradient(ellipse at top, #1a3a1a 0%, #0a1a0a 60%, #050a05 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .title-font {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.05em;
+  }
+
+  /* 金色文字效果 */
+  .gold-text {
+    background: linear-gradient(180deg, #f9e08a 0%, #d4af37 50%, #8b7500 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  /* 赌桌毛毡背景 */
+  .felt-bg {
+    background:
+      radial-gradient(ellipse at center, #137a3e 0%, #0a5f38 50%, #054028 100%);
+    position: relative;
+  }
+  .felt-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, transparent 0, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+  }
+
+  /* 金色边框 */
+  .gold-border {
+    border: 2px solid var(--gold);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5) inset,
+      0 0 20px rgba(212, 175, 55, 0.3),
+      0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  /* 骰子样式 */
+  .dice-container {
+    perspective: 1000px;
+    display: inline-block;
+  }
+
+  .dice {
+    width: 90px;
+    height: 90px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.1s;
+    display: inline-block;
+    margin: 0 10px;
+  }
+
+  .dice-face {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #fff 0%, #f0ead6 100%);
+    border-radius: 16px;
+    border: 2px solid #c4a975;
+    box-shadow:
+      inset 0 0 15px rgba(0,0,0,0.1),
+      inset 0 0 0 2px rgba(255,255,255,0.5);
+    display: grid;
+    padding: 12px;
+  }
+
+  .pip {
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at 30% 30%, #d4143a 0%, #8b0a1a 70%, #4a0009 100%);
+    border-radius: 50%;
+    box-shadow: inset 0 -1px 2px rgba(0,0,0,0.4);
+    align-self: center;
+    justify-self: center;
+  }
+
+  /* 各面位置 */
+  .face-1 { transform: rotateY(0deg) translateZ(45px); }
+  .face-2 { transform: rotateY(90deg) translateZ(45px); }
+  .face-3 { transform: rotateY(180deg) translateZ(45px); }
+  .face-4 { transform: rotateY(-90deg) translateZ(45px); }
+  .face-5 { transform: rotateX(90deg) translateZ(45px); }
+  .face-6 { transform: rotateX(-90deg) translateZ(45px); }
+
+  /* 各面点数布局 */
+  .face-1 { grid-template: 1fr / 1fr; }
+  .face-1 .pip:nth-child(1) { grid-area: 1/1; }
+
+  .face-2, .face-3 { grid-template: 1fr 1fr / 1fr 1fr; }
+  .face-2 .pip:nth-child(1) { grid-area: 1/1; }
+  .face-2 .pip:nth-child(2) { grid-area: 2/2; }
+  .face-3 .pip:nth-child(1) { grid-area: 1/1; }
+  .face-3 .pip:nth-child(2) { grid-area: 1/2; }
+  .face-3 .pip:nth-child(3) { grid-area: 2/1; }
+
+  .face-4, .face-5 { grid-template: 1fr 1fr / 1fr 1fr; }
+  .face-4 .pip:nth-child(1) { grid-area: 1/1; }
+  .face-4 .pip:nth-child(2) { grid-area: 1/2; }
+  .face-4 .pip:nth-child(3) { grid-area: 2/1; }
+  .face-4 .pip:nth-child(4) { grid-area: 2/2; }
+
+  .face-5 .pip:nth-child(1) { grid-area: 1/1; }
+  .face-5 .pip:nth-child(2) { grid-area: 1/2; }
+  .face-5 .pip:nth-child(3) { grid-area: 2/1; }
+  .face-5 .pip:nth-child(4) { grid-area: 2/2; }
+  .face-5 .pip:nth-child(5) { display: none; }
+
+  .face-6 { grid-template: 1fr 1fr 1fr / 1fr 1fr; }
+  .face-6 .pip:nth-child(1) { grid-area: 1/1; }
+  .face-6 .pip:nth-child(2) { grid-area: 1/2; }
+  .face-6 .pip:nth-child(3) { grid-area: 2/1; }
+  .face-6 .pip:nth-child(4) { grid-area: 2/2; }
+  .face-6 .pip:nth-child(5) { grid-area: 3/1; }
+  .face-6 .pip:nth-child(6) { grid-area: 3/2; }
+
+  /* 骰子滚动动画 */
+  @keyframes dice-roll {
+    0% { transform: rotateX(0) rotateY(0) translateY(0); }
+    20% { transform: rotateX(360deg) rotateY(180deg) translateY(-30px); }
+    40% { transform: rotateX(720deg) rotateY(540deg) translateY(-50px); }
+    60% { transform: rotateX(1080deg) rotateY(900deg) translateY(-30px); }
+    80% { transform: rotateX(1440deg) rotateY(1260deg) translateY(-10px); }
+    100% { transform: rotateX(1800deg) rotateY(1800deg) translateY(0); }
+  }
+
+  .dice.rolling { animation: dice-roll 1.5s ease-out; }
+
+  /* 按钮样式 */
+  .btn-gold {
+    background: linear-gradient(180deg, #f9e08a 0%, #d4af37 50%, #8b7500 100%);
+    color: #1a1a1a;
+    font-weight: 700;
+    border: 2px solid #6b5500;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      0 4px 12px rgba(0,0,0,0.4),
+      0 0 20px rgba(212,175,55,0.3);
+    transition: all 0.2s;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  .btn-gold:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      0 6px 16px rgba(0,0,0,0.5),
+      0 0 30px rgba(212,175,55,0.5);
+  }
+
+  .btn-gold:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn-gold:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-bet {
+    border: 2px solid var(--gold);
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-weight: 700;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-bet:hover:not(:disabled) {
+    background: rgba(212,175,55,0.2);
+    border-color: var(--gold-light);
+    box-shadow: 0 0 20px rgba(212,175,55,0.3);
+  }
+
+  .btn-bet.selected {
+    background: linear-gradient(180deg, rgba(212,175,55,0.4) 0%, rgba(139,117,0,0.6) 100%);
+    border-color: var(--gold-light);
+    box-shadow: 0 0 25px rgba(212,175,55,0.6), inset 0 0 15px rgba(255,255,255,0.1);
+  }
+
+  .btn-bet:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* 红色按钮 - 大 */
+  .btn-big {
+    border-color: #ff4060;
+    color: #ff8090;
+  }
+  .btn-big:hover:not(:disabled) {
+    background: rgba(255,64,96,0.2);
+    box-shadow: 0 0 20px rgba(255,64,96,0.4);
+  }
+  .btn-big.selected {
+    background: linear-gradient(180deg, rgba(196,30,58,0.6) 0%, rgba(139,10,26,0.8) 100%);
+    border-color: #ff6080;
+    box-shadow: 0 0 25px rgba(255,64,96,0.6);
+  }
+
+  /* 绿色按钮 - 细 */
+  .btn-small {
+    border-color: #40ff80;
+    color: #80ffa0;
+  }
+  .btn-small:hover:not(:disabled) {
+    background: rgba(64,255,128,0.15);
+    box-shadow: 0 0 20px rgba(64,255,128,0.3);
+  }
+  .btn-small.selected {
+    background: linear-gradient(180deg, rgba(10,95,56,0.7) 0%, rgba(5,64,40,0.9) 100%);
+    border-color: #60ffa0;
+    box-shadow: 0 0 25px rgba(64,255,128,0.5);
+  }
+
+  /* 筹码 */
+  .chip {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    border: 3px dashed rgba(255,255,255,0.4);
+  }
+  .chip::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .chip:hover { transform: translateY(-3px) scale(1.05); }
+  .chip.active {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 5px 20px rgba(212,175,55,0.5);
+  }
+
+  .chip-10 { background: radial-gradient(circle, #4a4a4a 0%, #1a1a1a 100%); color: #fff; }
+  .chip-50 { background: radial-gradient(circle, #1e88e5 0%, #0d47a1 100%); color: #fff; }
+  .chip-100 { background: radial-gradient(circle, #e53935 0%, #8b0a1a 100%); color: #fff; }
+  .chip-500 { background: radial-gradient(circle, #8e24aa 0%, #4a148c 100%); color: #fff; }
+
+  /* 结果显示动画 */
+  @keyframes result-pop {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .result-pop { animation: result-pop 0.5s ease-out; }
+
+  @keyframes coin-rain {
+    0% { transform: translateY(-100vh) rotate(0); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  .coin {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 30% 30%, #f9e08a, #d4af37 50%, #8b7500);
+    border-radius: 50%;
+    border: 2px solid #6b5500;
+    pointer-events: none;
+    z-index: 100;
+    animation: coin-rain 2s linear forwards;
+  }
+
+  /* 历史记录 */
+  .history-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid;
+  }
+  .history-win { background: rgba(64,255,128,0.15); border-color: #40ff80; color: #80ffa0; }
+  .history-lose { background: rgba(255,64,96,0.15); border-color: #ff4060; color: #ff8090; }
+
+  /* 点数按钮 */
+  .point-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 2px solid var(--gold);
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-weight: 900;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .point-btn:hover:not(:disabled) {
+    background: rgba(212,175,55,0.2);
+    transform: scale(1.1);
+  }
+  .point-btn.selected {
+    background: linear-gradient(180deg, rgba(212,175,55,0.5) 0%, rgba(139,117,0,0.7) 100%);
+    box-shadow: 0 0 15px rgba(212,175,55,0.6);
+  }
+  .point-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* 光晕装饰 */
+  .glow-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,0.2);
+    pointer-events: none;
+  }
+
+  /* 闪烁动画 */
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 20px rgba(212,175,55,0.3); }
+    50% { box-shadow: 0 0 40px rgba(212,175,55,0.6); }
+  }
+  .pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+
+  /* 装饰性灯泡 */
+  @keyframes bulb-flicker {
+    0%, 100% { opacity: 1; box-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; }
+    50% { opacity: 0.6; box-shadow: 0 0 5px #ffd700; }
+  }
+  .bulb {
+    width: 8px;
+    height: 8px;
+    background: #ffd700;
+    border-radius: 50%;
+    animation: bulb-flicker 1.5s ease-in-out infinite;
+  }
+
+  /* 隐藏滚动条但可滚动 */
+  .scroll-hide::-webkit-scrollbar { display: none; }
+  .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* 模态框 */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+
+  /* 摇动动画 */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .shake { animation: shake 0.3s ease-in-out; }
+
+  /* 移动端适配 */
+  @media (max-width: 640px) {
+    .dice { width: 70px; height: 70px; margin: 0 5px; }
+    .dice-face { width: 70px; height: 70px; padding: 8px; }
+    .face-1, .face-2, .face-3, .face-4, .face-5, .face-6 {
+      width: 70px; height: 70px;
+    }
+    .face-1 { transform: rotateY(0deg) translateZ(35px); }
+    .face-2 { transform: rotateY(90deg) translateZ(35px); }
+    .face-3 { transform: rotateY(180deg) translateZ(35px); }
+    .face-4 { transform: rotateY(-90deg) translateZ(35px); }
+    .face-5 { transform: rotateX(90deg) translateZ(35px); }
+    .face-6 { transform: rotateX(-90deg) translateZ(35px); }
+    .pip { width: 10px; height: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 装饰灯泡边框 -->
+<div id="bulbBorder" class="fixed inset-0 pointer-events-none z-10"></div>
+
+<!-- 主容器 -->
+<div class="relative min-h-screen flex flex-col items-center px-4 py-6">
+
+  <!-- 标题 -->
+  <header class="text-center mb-6 mt-2">
+    <div class="flex items-center justify-center gap-3 mb-1">
+      <span class="text-3xl">🎰</span>
+      <h1 class="title-font text-5xl md:text-6xl font-black gold-text">骰仔大細</h1>
+      <span class="text-3xl">🎲</span>
+    </div>
+    <p class="title-font text-sm md:text-base text-yellow-200/70 tracking-widest">CASINO SIC BO · 賭場擲骰</p>
+  </header>
+
+  <!-- 主游戏区 -->
+  <main class="w-full max-w-5xl">
+
+    <!-- 余额显示 -->
+    <div class="flex justify-center mb-4">
+      <div class="felt-bg gold-border rounded-full px-8 py-3 flex items-center gap-4 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-600/10 to-transparent"></div>
+        <span class="text-yellow-200/80 text-sm font-bold tracking-wider">現有籌碼</span>
+        <span id="balanceDisplay" class="title-font text-3xl md:text-4xl font-black gold-text">HK$ 1,000</span>
+      </div>
+    </div>
+
+    <!-- 骰子区 -->
+    <div class="felt-bg gold-border rounded-3xl p-6 md:p-8 mb-4 relative overflow-hidden">
+      <!-- 装饰光环 -->
+      <div class="glow-ring" style="width:300px;height:300px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+      <div class="glow-ring" style="width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.5;"></div>
+
+      <div class="relative z-10">
+        <!-- 结果显示 -->
+        <div id="resultBanner" class="text-center mb-4 h-12 flex items-center justify-center">
+          <span class="title-font text-xl md:text-2xl text-yellow-200/60 tracking-widest">放置籌碼 · 開始遊戲</span>
+        </div>
+
+        <!-- 骰子 -->
+        <div class="flex justify-center items-center py-4 md:py-6 min-h-[120px]">
+          <div id="dice1" class="dice-container">
+            <div class="dice">
+              <div class="dice-face face-1"><div class="pip"></div></div>
+              <div class="dice-face face-2"><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+            </div>
+          </div>
+          <div id="dice2" class="dice-container">
+            <div class="dice">
+              <div class="dice-face face-1"><div class="pip"></div></div>
+              <div class="dice-face face-2"><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+            </div>
+          </div>
+          <div id="dice3" class="dice-container">
+            <div class="dice">
+              <div class="dice-face face-1"><div class="pip"></div></div>
+              <div class="dice-face face-2"><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="dice-face face-6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 总点数显示 -->
+        <div class="text-center mt-2">
+          <div class="inline-block felt-bg gold-border rounded-2xl px-6 py-2">
+            <span class="text-yellow-200/70 text-sm">總點數</span>
+            <span id="totalPoints" class="title-font text-2xl font-black gold-text ml-2">—</span>
+            <span id="bigSmallLabel" class="ml-3 text-sm font-bold"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下注区 -->
+    <div class="felt-bg gold-border rounded-3xl p-4 md:p-6 mb-4">
+      <h2 class="title-font text-center text-lg text-yellow-200/80 mb-4 tracking-wider">▼ 下注區 ▼</h2>
+
+      <!-- 大/细 -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button class="btn-bet btn-big rounded-2xl py-4 px-4 flex flex-col items-center" data-bet="big">
+          <span class="title-font text-2xl font-black">大</span>
+          <span class="text-xs opacity-80">11-17 點 · 1賠1</span>
+          <span class="text-xs mt-1 opacity-60">除圍骰</span>
+        </button>
+        <button class="btn-bet btn-small rounded-2xl py-4 px-4 flex flex-col items-center" data-bet="small">
+          <span class="title-font text-2xl font-black">細</span>
+          <span class="text-xs opacity-80">4-10 點 · 1賠1</span>
+          <span class="text-xs mt-1 opacity-60">除圍骰</span>
+        </button>
+      </div>
+
+      <!-- 点数下注 -->
+      <div class="mb-2">
+        <p class="text-center text-yellow-200/70 text-sm mb-2">買點數 · 1賠1</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <button class="point-btn" data-bet="point-4">4</button>
+          <button class="point-btn" data-bet="point-5">5</button>
+          <button class="point-btn" data-bet="point-6">6</button>
+          <button class="point-btn" data-bet="point-7">7</button>
+          <button class="point-btn" data-bet="point-8">8</button>
+          <button class="point-btn" data-bet="point-9">9</button>
+          <button class="point-btn" data-bet="point-10">10</button>
+          <button class="point-btn" data-bet="point-11">11</button>
+          <button class="point-btn" data-bet="point-12">12</button>
+          <button class="point-btn" data-bet="point-13">13</button>
+          <button class="point-btn" data-bet="point-14">14</button>
+          <button class="point-btn" data-bet="point-15">15</button>
+          <button class="point-btn" data-bet="point-16">16</button>
+          <button class="point-btn" data-bet="point-17">17</button>
+        </div>
+      </div>
+
+      <!-- 围骰 -->
+      <div class="mt-4">
+        <p class="text-center text-yellow-200/70 text-sm mb-2">圍骰（三粒一樣）· 1賠24</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <button class="point-btn" data-bet="triple-1">三個1</button>
+          <button class="point-btn" data-bet="triple-2">三個2</button>
+          <button class="point-btn" data-bet="triple-3">三個3</button>
+          <button class="point-btn" data-bet="triple-4">三個4</button>
+          <button class="point-btn" data-bet="triple-5">三個5</button>
+          <button class="point-btn" data-bet="triple-6">三個6</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筹码区 -->
+    <div class="felt-bg gold-border rounded-3xl p-4 md:p-6 mb-4">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <p class="text-yellow-200/80 text-sm font-bold mb-1">選擇籌碼</p>
+          <p class="text-xs text-yellow-200/50">點擊下注區可放置籌碼</p>
+        </div>
+        <div class="flex gap-3 flex-wrap justify-center">
+          <div class="chip chip-10" data-chip="10">10</div>
+          <div class="chip chip-50 active" data-chip="50">50</div>
+          <div class="chip chip-100" data-chip="100">100</div>
+          <div class="chip chip-500" data-chip="500">500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 已下注显示 -->
+    <div class="felt-bg gold-border rounded-2xl p-4 mb-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-yellow-200/80 text-sm font-bold">已下注</span>
+        <button id="clearBets" class="text-xs text-red-300/80 hover:text-red-300 underline">清除下注</button>
+      </div>
+      <div id="betsList" class="text-sm text-yellow-100/80 min-h-[24px]">尚未下注</div>
+      <div class="mt-2 pt-2 border-t border-yellow-600/20 flex justify-between">
+        <span class="text-yellow-200/60 text-xs">總下注金額</span>
+        <span id="totalBet" class="text-yellow-100 font-bold">HK$ 0</span>
+      </div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="flex justify-center gap-4 mb-6">
+      <button id="startBtn" class="btn-gold title-font text-xl px-12 py-4 rounded-full pulse-gold">
+        🎲 開 始 擲 骰
+      </button>
+    </div>
+
+    <!-- 历史记录 -->
+    <div class="felt-bg gold-border rounded-2xl p-4 mb-4">
+      <p class="text-yellow-200/80 text-sm font-bold mb-2">歷史記錄</p>
+      <div id="historyList" class="flex flex-wrap gap-2 scroll-hide">
+        <span class="text-yellow-200/40 text-xs">暫無記錄</span>
+      </div>
+    </div>
+
+    <!-- 统计 -->
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="felt-bg gold-border rounded-xl p-3 text-center">
+        <p class="text-yellow-200/60 text-xs">局數</p>
+        <p id="roundCount" class="title-font text-xl font-black gold-text">0</p>
+      </div>
+      <div class="felt-bg gold-border rounded-xl p-3 text-center">
+        <p class="text-yellow-200/60 text-xs">勝場</p>
+        <p id="winCount" class="title-font text-xl font-black text-green-400">0</p>
+      </div>
+      <div class="felt-bg gold-border rounded-xl p-3 text-center">
+        <p class="text-yellow-200/60 text-xs">負場</p>
+        <p id="loseCount" class="title-font text-xl font-black text-red-400">0</p>
+      </div>
+    </div>
+
+    <!-- 游戏说明 -->
+    <details class="felt-bg gold-border rounded-2xl p-4 mb-4 text-sm">
+      <summary class="cursor-pointer text-yellow-200 font-bold">📖 遊戲規則</summary>
+      <div class="mt-3 space-y-2 text-yellow-100/80 text-xs leading-relaxed">
+        <p>• <b>大</b>：三粒骰仔總點數 11-17 點（除圍骰），1賠1</p>
+        <p>• <b>細</b>：三粒骰仔總點數 4-10 點（除圍骰），1賠1</p>
+        <p>• <b>買點數</b>：猜中三粒骰仔總點數，1賠1</p>
+        <p>• <b>圍骰</b>：三粒骰仔全部一樣，1賠24</p>
+        <p>• 開局有 <b>HK$ 1,000</b> 籌碼，可同時下多注</p>
+        <p>• 籌碼歸零即遊戲結束</p>
+      </div>
+    </details>
+
+    <button id="resetBtn" class="w-full text-yellow-200/40 hover:text-yellow-200 text-xs py-2">
+      ↻ 重新開始遊戲
+    </button>
+
+  </main>
+</div>
+
+<!-- 游戏结束模态框 -->
+<div id="gameOverModal" class="modal-overlay" style="display:none;">
+  <div class="felt-bg gold-border rounded-3xl p-8 max-w-md mx-4 text-center relative overflow-hidden">
+    <div class="text-6xl mb-4" id="gameOverIcon">💸</div>
+    <h2 class="title-font text-3xl font-black gold-text mb-2" id="gameOverTitle">遊戲結束</h2>
+    <p class="text-yellow-200/80 mb-4" id="gameOverMessage">您的籌碼已用完</p>
+    <div class="bg-black/30 rounded-xl p-4 mb-4">
+      <p class="text-yellow-200/60 text-sm">總局數</p>
+      <p class="title-font text-2xl font-black gold-text" id="finalRounds">0</p>
+    </div>
+    <div class="bg-black/30 rounded-xl p-4 mb-6">
+      <p class="text-yellow-200/60 text-sm">最終籌碼</p>
+      <p class="title-font text-3xl font-black gold-text" id="finalBalance">HK$ 0</p>
+      <p class="text-sm mt-1" id="profitLabel"></p>
+    </div>
+    <button onclick="resetGame()" class="btn-gold title-font text-lg px-8 py-3 rounded-full">
+      🔄 再 玩 一 次
+    </button>
+  </div>
+</div>
+
+<script>
+// ============= 游戏状态 =============
+const state = {
+  balance: 1000,
+  bets: {}, // { 'big': 50, 'point-7': 100, ... }
+  selectedChip: 50,
+  rolling: false,
+  round: 0,
+  wins: 0,
+  losses: 0,
+  startBalance: 1000
+};
+
+// ============= 工具函数 =============
+function $(id) { return document.getElementById(id); }
+
+function formatMoney(n) {
+  return 'HK$ ' + n.toLocaleString();
+}
+
+// ============= 初始化灯泡边框 =============
+function initBulbs() {
+  const border = $('bulbBorder');
+  const bulbs = [];
+  const spacing = 40;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const cols = Math.floor(w / spacing);
+  const rows = Math.floor(h / spacing);
+
+  for (let i = 0; i < cols; i++) {
+    const b = document.createElement('div');
+    b.className = 'bulb';
+    b.style.position = 'fixed';
+    b.style.top = '4px';
+    b.style.left = (i * spacing + 4) + 'px';
+    b.style.animationDelay = (i * 0.1) + 's';
+    border.appendChild(b);
+  }
+  for (let i = 0; i < cols; i++) {
+    const b = document.createElement('div');
+    b.className = 'bulb';
+    b.style.position = 'fixed';
+    b.style.bottom = '4px';
+    b.style.left = (i * spacing + 4) + 'px';
+    b.style.animationDelay = (i * 0.15) + 's';
+    border.appendChild(b);
+  }
+}
+
+// ============= 骰子控制 =============
+// 骰子面到旋转角度的映射
+const diceRotations = {
+  1: { x: 0, y: 0 },
+  2: { x: 0, y: -90 },
+  3: { x: 0, y: 180 },
+  4: { x: 0, y: 90 },
+  5: { x: -90, y: 0 },
+  6: { x: 90, y: 0 }
+};
+
+function setDiceFace(diceEl, value) {
+  const r = diceRotations[value];
+  diceEl.querySelector('.dice').style.transform = `rotateX(${r.x}deg) rotateY(${r.y}deg)`;
+}
+
+function rollDice() {
+  return new Promise((resolve) => {
+    const d1 = $('dice1').querySelector('.dice');
+    const d2 = $('dice2').querySelector('.dice');
+    const d3 = $('dice3').querySelector('.dice');
+
+    // 添加滚动动画
+    d1.classList.add('rolling');
+    d2.classList.add('rolling');
+    d3.classList.add('rolling');
+
+    // 动画过程中随机翻转
+    const interval = setInterval(() => {
+      d1.style.transform = `rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg)`;
+      d2.style.transform = `rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg)`;
+      d3.style.transform = `rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg)`;
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      d1.classList.remove('rolling');
+      d2.classList.remove('rolling');
+      d3.classList.remove('rolling');
+
+      const v1 = Math.floor(Math.random() * 6) + 1;
+      const v2 = Math.floor(Math.random() * 6) + 1;
+      const v3 = Math.floor(Math.random() * 6) + 1;
+
+      setDiceFace($('dice1'), v1);
+      setDiceFace($('dice2'), v2);
+      setDiceFace($('dice3'), v3);
+
+      resolve([v1, v2, v3]);
+    }, 1500);
+  });
+}
+
+// ============= 下注管理 =============
+function selectChip(amount) {
+  state.selectedChip = amount;
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', parseInt(c.dataset.chip) === amount);
+  });
+}
+
+function placeBet(betType) {
+  if (state.rolling) return;
+  if (state.balance < state.selectedChip) {
+    showResult('籌碼不足！', 'lose');
+    return;
+  }
+
+  state.balance -= state.selectedChip;
+  state.bets[betType] = (state.bets[betType] || 0) + state.selectedChip;
+
+  updateBalance();
+  updateBetsList();
+  updateButtonStates();
+
+  // 按钮动画
+  const btn = document.querySelector(`[data-bet="${betType}"]`);
+  if (btn) {
+    btn.classList.add('shake');
+    setTimeout(() => btn.classList.remove('shake'), 300);
+  }
+}
+
+function clearBets() {
+  if (state.rolling) return;
+  let total = 0;
+  for (const k in state.bets) total += state.bets[k];
+  state.balance += total;
+  state.bets = {};
+  updateBalance();
+  updateBetsList();
+  updateButtonStates();
+}
+
+// ============= 结算 =============
+function settleBets(dice) {
+  const [d1, d2, d3] = dice;
+  const total = d1 + d2 + d3;
+  const isTriple = d1 === d2 && d2 === d3;
+  let winnings = 0;
+  let winDetails = [];
+
+  for (const betType in state.bets) {
+    const amount = state.bets[betType];
+    let win = 0;
+
+    if (betType === 'big') {
+      // 大：11-17，除围骰
+      if (total >= 11 && total <= 17 && !isTriple) {
+        win = amount * 2; // 1赔1 = 返还本金+1倍
+      }
+    } else if (betType === 'small') {
+      // 细：4-10，除围骰
+      if (total >= 4 && total <= 10 && !isTriple) {
+        win = amount * 2;
+      }
+    } else if (betType.startsWith('point-')) {
+      const point = parseInt(betType.split('-')[1]);
+      if (total === point) {
+        win = amount * 2;
+      }
+    } else if (betType.startsWith('triple-')) {
+      const num = parseInt(betType.split('-')[1]);
+      if (isTriple && d1 === num) {
+        win = amount * 25; // 1赔24 = 返还本金+24倍
+      }
+    }
+
+    if (win > 0) {
+      winnings += win;
+      winDetails.push(`${betType} +${win}`);
+    }
+  }
+
+  return { winnings, total, isTriple, winDetails };
+}
+
+// ============= UI 更新 =============
+function updateBalance() {
+  $('balanceDisplay').textContent = formatMoney(state.balance);
+}
+
+function updateBetsList() {
+  const list = $('betsList');
+  const keys = Object.keys(state.bets);
+
+  if (keys.length === 0) {
+    list.innerHTML = '尚未下注';
+    $('totalBet').textContent = 'HK$ 0';
+    return;
+  }
+
+  const betNames = {
+    'big': '大',
+    'small': '細'
+  };
+
+  let html = '';
+  let total = 0;
+  for (const k of keys) {
+    let name = betNames[k];
+    if (!name) {
+      if (k.startsWith('point-')) name = `點數${k.split('-')[1]}`;
+      else if (k.startsWith('triple-')) name = `圍骰${k.split('-')[1]}`;
+    }
+    html += `<span class="inline-block bg-yellow-600/20 border border-yellow-600/40 rounded-full px-2 py-0.5 mr-2 mb-1">${name}: ${formatMoney(state.bets[k])}</span>`;
+    total += state.bets[k];
+  }
+  list.innerHTML = html;
+  $('totalBet').textContent = formatMoney(total);
+}
+
+function updateButtonStates() {
+  const hasBets = Object.keys(state.bets).length > 0;
+  $('startBtn').disabled = !hasBets || state.rolling;
+  $('clearBets').style.opacity = hasBets ? '1' : '0.3';
+}
+
+function updateStats() {
+  $('roundCount').textContent = state.round;
+  $('winCount').textContent = state.wins;
+  $('loseCount').textContent = state.losses;
+}
+
+function showResult(text, type) {
+  const banner = $('resultBanner');
+  const color = type === 'win' ? 'text-green-400' : type === 'lose' ? 'text-red-400' : 'text-yellow-200';
+  banner.innerHTML = `<span class="result-pop title-font text-2xl md:text-3xl font-black ${color}">${text}</span>`;
+}
+
+function showTotalPoints(total, isTriple) {
+  $('totalPoints').textContent = total;
+  let label = '';
+  let color = '';
+  if (isTriple) {
+    label = '圍骰！';
+    color = 'text-yellow-400';
+  } else if (total >= 11) {
+    label = '大';
+    color = 'text-red-400';
+  } else {
+    label = '細';
+    color = 'text-green-400';
+  }
+  $('bigSmallLabel').innerHTML = `<span class="${color} font-bold">${label}</span>`;
+}
+
+// ============= 金币雨 =============
+function coinRain(count = 30) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const coin = document.createElement('div');
+      coin.className = 'coin';
+      coin.style.left = Math.random() * 100 + 'vw';
+      coin.style.animationDuration = (1.5 + Math.random()) + 's';
+      coin.style.animationDelay = Math.random() * 0.5 + 's';
+      document.body.appendChild(coin);
+      setTimeout(() => coin.remove(), 3000);
+    }, i * 50);
+  }
+}
+
+// ============= 历史记录 =============
+function addHistory(dice, total, isTriple, won) {
+  const list = $('historyList');
+  if (state.round === 1) list.innerHTML = '';
+
+  const item = document.createElement('div');
+  item.className = `history-item ${won ? 'history-win' : 'history-lose'}`;
+  const diceStr = dice.join('+');
+  const label = isTriple ? '圍' : (total >= 11 ? '大' : '細');
+  item.innerHTML = `<span>${diceStr}=${total}</span><span>${label}</span><span>${won ? '✓' : '✗'}</span>`;
+  list.prepend(item);
+}
+
+// ============= 游戏主流程 =============
+async function startGame() {
+  if (state.rolling || Object.keys(state.bets).length === 0) return;
+
+  state.rolling = true;
+  state.round++;
+  updateButtonStates();
+  showResult('🎲 擲骰中...', '');
+  $('totalPoints').textContent = '—';
+  $('bigSmallLabel').innerHTML = '';
+
+  const dice = await rollDice();
+  const [d1, d2, d3] = dice;
+  const total = d1 + d2 + d3;
+  const isTriple = d1 === d2 && d2 === d3;
+
+  // 短暂停顿展示结果
+  await new Promise(r => setTimeout(r, 300));
+
+  showTotalPoints(total, isTriple);
+
+  const result = settleBets(dice);
+  state.balance += result.winnings;
+
+  const hasBets = Object.keys(state.bets).length > 0;
+  const anyWin = result.winnings > 0;
+
+  if (anyWin) {
+    const profit = result.winnings;
+    showResult(`🎉 贏了 ${formatMoney(profit)}！`, 'win');
+    coinRain(Math.min(50, Math.floor(profit / 20) + 20));
+    state.wins++;
+  } else if (hasBets) {
+    showResult('💸 全軍覆沒', 'lose');
+    state.losses++;
+  }
+
+  addHistory(dice, total, isTriple, anyWin);
+  state.bets = {};
+
+  updateBalance();
+  updateBetsList();
+  updateStats();
+
+  state.rolling = false;
+
+  // 检查游戏结束
+  if (state.balance <= 0) {
+    setTimeout(() => showGameOver(), 1000);
+  } else {
+    updateButtonStates();
+  }
+}
+
+function showGameOver() {
+  const modal = $('gameOverModal');
+  const profit = state.balance - state.startBalance;
+  $('finalRounds').textContent = state.round;
+  $('finalBalance').textContent = formatMoney(state.balance);
+
+  if (profit > 0) {
+    $('gameOverIcon').textContent = '💰';
+    $('gameOverTitle').textContent = '收穫豐厚！';
+    $('gameOverMessage').textContent = '恭喜您成為今晚大贏家';
+    $('profitLabel').innerHTML = `<span class="text-green-400">+${formatMoney(profit)} 盈利</span>`;
+  } else if (profit === 0) {
+    $('gameOverIcon').textContent = '🎮';
+    $('gameOverTitle').textContent = '不贏不輸';
+    $('gameOverMessage').textContent = '平手收場';
+    $('profitLabel').innerHTML = `<span class="text-yellow-200">無盈虧</span>`;
+  } else {
+    $('gameOverIcon').textContent = '💸';
+    $('gameOverTitle').textContent = '籌碼已盡';
+    $('gameOverMessage').textContent = '再接再厲，下次好運';
+    $('profitLabel').innerHTML = `<span class="text-red-400">${formatMoney(profit)} 虧損</span>`;
+  }
+
+  modal.style.display = 'flex';
+}
+
+function resetGame() {
+  state.balance = 1000;
+  state.bets = {};
+  state.rolling = false;
+  state.round = 0;
+  state.wins = 0;
+  state.losses = 0;
+  state.startBalance = 1000;
+
+  $('gameOverModal').style.display = 'none';
+  $('historyList').innerHTML = '<span class="text-yellow-200/40 text-xs">暫無記錄</span>';
+  $('resultBanner').innerHTML = '<span class="title-font text-xl md:text-2xl text-yellow-200/60 tracking-widest">放置籌碼 · 開始遊戲</span>';
+  $('totalPoints').textContent = '—';
+  $('bigSmallLabel').innerHTML = '';
+
+  // 重置骰子到1点
+  setDiceFace($('dice1'), 1);
+  setDiceFace($('dice2'), 1);
+  setDiceFace($('dice3'), 1);
+
+  updateBalance();
+  updateBetsList();
+  updateStats();
+  updateButtonStates();
+}
+
+// ============= 事件绑定 =============
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => selectChip(parseInt(chip.dataset.chip)));
+});
+
+document.querySelectorAll('[data-bet]').forEach(btn => {
+  btn.addEventListener('click', () => placeBet(btn.dataset.bet));
+});
+
+$('startBtn').addEventListener('click', startGame);
+$('clearBets').addEventListener('click', clearBets);
+$('resetBtn').addEventListener('click', () => {
+  if (confirm('確定要重新開始嗎？')) resetGame();
+});
+
+// ============= 初始化 =============
+initBulbs();
+setDiceFace($('dice1'), 1);
+setDiceFace($('dice2'), 1);
+setDiceFace($('dice3'), 1);
+updateBalance();
+updateButtonStates();
+</script>
+
+</body>
+</html>
